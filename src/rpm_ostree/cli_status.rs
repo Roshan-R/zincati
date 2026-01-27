@@ -1,7 +1,7 @@
 //! Interface to `rpm-ostree status --json`.
 
 use super::actor::{RpmOstreeClient, StatusCache};
-use super::{Payload, Release};
+use super::Release;
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use filetime::FileTime;
 use log::{debug, trace};
@@ -90,9 +90,10 @@ struct BaseCommitMeta {
 impl Deployment {
     /// Convert into `Release`.
     pub fn into_release(self) -> Release {
-        // TODO: change the unwrap to something else
-        let reference = self.get_container_image_reference_digest().unwrap();
-        let payload = Payload::Pullspec(reference);
+        let payload = self.get_container_image_reference_digest().expect(
+            "Failed to find OCI image reference. \n\
+            Zincati only support bootable OCI containers and not ostree remotes.",
+        );
         Release {
             payload,
             version: self.version,

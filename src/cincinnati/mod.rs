@@ -335,13 +335,7 @@ fn find_denylisted_releases(graph: &client::Graph, depls: BTreeSet<Release>) -> 
 /// Check whether input node matches current checksum.
 fn is_same_checksum(node: &Node, deploy: &Release) -> bool {
     match node.metadata.get(SCHEME_KEY) {
-        Some(scheme) if scheme == OCI_SCHEME => {
-            if let Ok(Some(ref local_imgref)) = deploy.get_image_reference() {
-                local_imgref == &node.payload
-            } else {
-                false
-            }
-        }
+        Some(scheme) if scheme == OCI_SCHEME => deploy.payload.whole() == node.payload,
         _ => false,
     }
 }
@@ -380,13 +374,9 @@ mod tests {
 
     #[test]
     fn source_node_comparison() {
-        use ostree_ext::oci_spec::distribution::Reference;
-
         let current = Release {
             version: String::new(),
-            payload: Payload::Pullspec(
-                Reference::try_from("quay.io/fedora/fedora-coreos:oci-mock").unwrap(),
-            ),
+            payload: Payload::try_from("quay.io/fedora/fedora-coreos:oci-mock").unwrap(),
             age_index: None,
         };
 
